@@ -26,7 +26,6 @@ async function postTicket(userId: number, ticketTypeId: number) {
 
   if(!user) throw notFoundError();
 
-  console.log("executei até postTicket");
   const enrollmentId = await enrollmentRepository.findEnrollment(userId);
   const ticket = await ticketRepository.createTicket(enrollmentId.id, ticketTypeId);
 
