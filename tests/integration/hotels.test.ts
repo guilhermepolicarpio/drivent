@@ -3,7 +3,7 @@ import httpStatus from "http-status";
 import supertest from "supertest";
 import { cleanDb, generateValidToken } from "../helpers";
 import faker from "@faker-js/faker";
-import { createUser, } from "../factories";
+import { createEnrollmentWithAddress, createUser, } from "../factories";
 import * as jwt from "jsonwebtoken";
 
 beforeAll(async () => {
@@ -47,5 +47,15 @@ describe("GET /hotels", () => {
       const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
     
       expect(response.body).toEqual({});
+    });
+
+    it("should respond with status 401 if user doesn't own a ticket", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      await createEnrollmentWithAddress(user);
+
+      const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toBe(httpStatus.UNAUTHORIZED);
     });
   });});
