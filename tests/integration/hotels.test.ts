@@ -6,6 +6,7 @@ import faker from "@faker-js/faker";
 import { createEnrollmentWithAddress, createPayment, createTicket, createTicketType, createUser, } from "../factories";
 import * as jwt from "jsonwebtoken";
 import { TicketStatus } from "@prisma/client";
+import { createHotel } from "../factories/hotels-factory";
 
 beforeAll(async () => {
   await init();
@@ -74,9 +75,22 @@ describe("GET /hotels", () => {
       const ticketType = await createTicketType({ isRemote: false, includesHotel: true });
       const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
 
-      await createPayment(ticket.id, ticketType.price);
+      await createPayment(ticket.id, ticketType.price );
       const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
 
       expect(response.body).toEqual([]);
+    });
+
+    it("should respond with status 200 and hotels data", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const enrollment = await createEnrollmentWithAddress(user);
+      const ticketType = await createTicketType({ isRemote: false, includesHotel: true });
+      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
+
+      await createPayment(ticket.id, ticketType.price );
+      const hotel = await createHotel();
+      const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
+      expect(response.status).toBe(httpStatus.OK);
     });
   });});
