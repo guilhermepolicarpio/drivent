@@ -3,8 +3,9 @@ import httpStatus from "http-status";
 import supertest from "supertest";
 import { cleanDb, generateValidToken } from "../helpers";
 import faker from "@faker-js/faker";
-import { createEnrollmentWithAddress, createUser, } from "../factories";
+import { createEnrollmentWithAddress, createPayment, createTicket, createTicketType, createUser, } from "../factories";
 import * as jwt from "jsonwebtoken";
+import { TicketStatus } from "@prisma/client";
 
 beforeAll(async () => {
   await init();
@@ -41,21 +42,41 @@ describe("GET /hotels", () => {
   });
 
   describe("when token is valid", () => {
-    it("should respond with empty array when there are no hotels created", async () => {
-      const token = await generateValidToken();
-    
+    it("should respond with status 402 if user haven't paid the ticket that includes an hotel", async () => {
+      const user =  await createUser();
+      const token = await generateValidToken(user);
+      const enrollment = await createEnrollmentWithAddress(user);
+      const ticketType = await createTicketType({ isRemote: false, includesHotel: true });
+         
+      await createTicket(enrollment.id, ticketType.id, TicketStatus.RESERVED);
+
       const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
     
-      expect(response.body).toEqual({});
+      expect(response.status).toBe(httpStatus.PAYMENT_REQUIRED);
     });
 
-    it("should respond with status 401 if user doesn't own a ticket", async () => {
+    it("should respond with status 403 if user doesn't own a ticket that includes hotel", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
-      await createEnrollmentWithAddress(user);
+      const enrollment = await createEnrollmentWithAddress(user);
 
+      const ticketType = await createTicketType({ isRemote: false, includesHotel: false });
+      await createTicket(enrollment.id, ticketType.id, TicketStatus.RESERVED);
       const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
 
-      expect(response.status).toBe(httpStatus.UNAUTHORIZED);
+      expect(response.status).toBe(httpStatus.FORBIDDEN);
+    });
+
+    it("should respond with an empty array when are no hotels and user paid the ticket", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const enrollment = await createEnrollmentWithAddress(user);
+      const ticketType = await createTicketType({ isRemote: false, includesHotel: true });
+      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
+
+      await createPayment(ticket.id, ticketType.price);
+      const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
+
+      expect(response.body).toEqual([]);
     });
   });});
