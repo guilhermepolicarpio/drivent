@@ -20,6 +20,7 @@ export async function getHotels(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function getHotelRooms(req: AuthenticatedRequest, res: Response) {
+  const { userId } = req;
   const hotelId = Number(req.params.hotelId);
 
   if(!hotelId) {
@@ -27,11 +28,13 @@ export async function getHotelRooms(req: AuthenticatedRequest, res: Response) {
   }
   
   try{
-    const hotelRooms = await hotelsService.getHotelRooms(hotelId);
+    const hotelRooms = await hotelsService.getHotelRooms(userId, hotelId);
     return res.status(httpStatus.OK).send(hotelRooms);
   }catch(error) {
     if(error.name === "NotFoundError")
       return res.sendStatus(httpStatus.NOT_FOUND);
+    if(error.name === "ForbiddenError")
+      return res.sendStatus(httpStatus.FORBIDDEN);
     return res.sendStatus(httpStatus.INTERNAL_SERVER_ERROR);
   }
 }

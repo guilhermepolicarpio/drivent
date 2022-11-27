@@ -3,7 +3,6 @@ import { forbidenError } from "@/errors/forbidden-error";
 import { paymentError } from "@/errors/payment-error";
 import hotelsRepository from "@/repositories/hotel-repository";
 import ticketRepository from "@/repositories/ticket-repository";
-import { Hotel, Room } from "@prisma/client";
 
 async function getHotels(userId: number) {
   const ticket = await ticketRepository.findTicketByUserId(userId);
@@ -19,7 +18,13 @@ async function getHotels(userId: number) {
   return hotels;
 }
 
-async function getHotelRooms(hotelId: number) {
+async function getHotelRooms(userId: number, hotelId: number) {
+  const ticket = await ticketRepository.findTicketByUserId(userId);
+
+  if(!ticket || ticket.TicketType.includesHotel) {
+    throw forbidenError ();
+  }
+  
   const hotel = await hotelsRepository.getHotelById(hotelId);
   if(!hotel)
     throw notFoundError();
