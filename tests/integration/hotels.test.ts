@@ -68,19 +68,6 @@ describe("GET /hotels", () => {
       expect(response.status).toBe(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with an empty array when are no hotels and user paid the ticket", async () => {
-      const user = await createUser();
-      const token = await generateValidToken(user);
-      const enrollment = await createEnrollmentWithAddress(user);
-      const ticketType = await createTicketType({ isRemote: false, includesHotel: true });
-      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
-
-      await createPayment(ticket.id, ticketType.price );
-      const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
-
-      expect(response.body).toEqual([]);
-    });
-
     it("should respond with status 200 and hotels data", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
