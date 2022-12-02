@@ -15,7 +15,12 @@ import {
   enrollmentsRouter,
   ticketsRouter,
   paymentsRouter,
+<<<<<<< HEAD
   hotelsRouter
+=======
+  hotelsRouter,
+  bookingsRouter
+>>>>>>> 782714d (feat: implemented the booking route, controler, services and repository)
 } from "@/routers";
 
 const app = express();
@@ -30,6 +35,7 @@ app
   .use("/tickets", ticketsRouter)
   .use("/payments", paymentsRouter)
   .use("/hotels", hotelsRouter)
+  .use("/booking", bookingsRouter)
   .use(handleApplicationErrors);
 
 export function init(): Promise<Express> {
